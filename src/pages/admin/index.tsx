@@ -92,7 +92,7 @@ const AdminPage = () => {
 
   const handleDeleteMenu = async () => {
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("menus")
         .delete()
         .eq("id", selectedMenu?.menu.id);
@@ -103,6 +103,35 @@ const AdminPage = () => {
         );
         toast("Menu deleted successfully");
         setCreateDialog(false);
+        setSelectedMenu(null);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleEditMenu = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const newData = Object.fromEntries(formData);
+
+    console.log("new data: ", newData);
+
+    console.log("selected menu: ", selectedMenu?.menu);
+
+    try {
+      const { error } = await supabase
+        .from("menus")
+        .update(newData)
+        .eq("id", selectedMenu?.menu.id);
+      if (error) console.log("error: ", error);
+      else {
+        setMenus((prev) =>
+          prev.map((menu) =>
+            menu.id === selectedMenu?.menu.id ? { ...menu, ...newData } : menu
+          )
+        );
+        toast("Menu edited successfully");
         setSelectedMenu(null);
       }
     } catch (error) {
@@ -183,8 +212,12 @@ const AdminPage = () => {
               </div>
               <DialogFooter>
                 <DialogClose>
-                  <Button variant="secondary" className="cursor-pointer">
-                    Close
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="cursor-pointer"
+                  >
+                    Cancel
                   </Button>
                 </DialogClose>
                 <DialogClose>
@@ -245,7 +278,13 @@ const AdminPage = () => {
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
-                        <DropdownMenuItem>Update</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setSelectedMenu({ menu, action: "edit" })
+                          }
+                        >
+                          Edit
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>
                             setSelectedMenu({ menu, action: "delete" })
@@ -295,6 +334,102 @@ const AdminPage = () => {
               </Button>
             </DialogClose>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={selectedMenu !== null && selectedMenu.action === "edit"}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedMenu(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <form onSubmit={handleEditMenu}>
+            <DialogHeader>
+              <DialogTitle>Edit menu</DialogTitle>
+              <DialogDescription>Make changes to your menu.</DialogDescription>
+            </DialogHeader>
+            <div className="grid w-full gap-4">
+              <div className="grid w-full gap-1.5">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  placeholder="Insert Name"
+                  required
+                  defaultValue={selectedMenu?.menu.name}
+                />
+              </div>
+              <div className="grid w-full gap-1.5">
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  placeholder="Insert Price"
+                  required
+                  defaultValue={selectedMenu?.menu.price}
+                />
+              </div>
+              <div className="grid w-full gap-1.5">
+                <Label htmlFor="image">Image</Label>
+                <Input
+                  id="image"
+                  name="image"
+                  placeholder="Insert Image"
+                  required
+                  defaultValue={selectedMenu?.menu.image}
+                />
+              </div>
+              <div className="grid w-full gap-1.5">
+                <Label htmlFor="category">Category</Label>
+                <Select
+                  defaultValue={selectedMenu?.menu.category}
+                  name="category"
+                  required
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Category</SelectLabel>
+                      <SelectItem value="Coffee">Coffee</SelectItem>
+                      <SelectItem value="Non Coffee">Non Coffee</SelectItem>
+                      <SelectItem value="Pastries">Pastries</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid w-full gap-1.5">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  placeholder="Insert Description"
+                  required
+                  className="resize-none h-32"
+                  defaultValue={selectedMenu?.menu.description}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="cursor-pointer"
+                >
+                  Cancel
+                </Button>
+              </DialogClose>
+
+              <Button type="submit" className="cursor-pointer">
+                Edit
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
